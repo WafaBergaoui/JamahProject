@@ -19,8 +19,6 @@ router.get("/auth", auth, (req, res) => {
         lastname: req.user.lastname,
         role: req.user.role,
         image: req.user.image,
-        cart: req.user.cart,
-        history: req.user.history
     });
 });
 
@@ -71,18 +69,6 @@ router.get("/logout", auth, (req, res) => {
     });
 });
 
-
-
-router.get('/getHistory', auth, (req, res) => {
-    User.findOne(
-        { _id: req.user._id },
-        (err, doc) => {
-            let history = doc.history;
-            if (err) return res.status(400).send(err)
-            return res.status(200).json({ success: true, history })
-        }
-    )
-})
 
 
 module.exports = router;

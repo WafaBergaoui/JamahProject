@@ -2,8 +2,8 @@ const express = require('express');
 const router = express.Router();
 const { Facture } = require("../models/Facture");
 const multer = require('multer');
-
 const { auth } = require("../middleware/auth");
+
 
 var storage = multer.diskStorage({
     destination: (req, file, cb) => {
@@ -28,7 +28,7 @@ var upload = multer({ storage: storage }).single("file")
 //             Facture
 //=================================
 
-router.post("/uploadImage", auth, (req, res) => {
+router.post("/uploadImage", auth , (req, res) => {
 
     upload(req, res, err => {
         if (err) {
@@ -36,100 +36,47 @@ router.post("/uploadImage", auth, (req, res) => {
         }
         return res.json({ success: true, image: res.req.file.path, fileName: res.req.file.filename })
     })
-
 });
+
 
 
 router.post("/uploadFacture", auth, (req, res) => {
 
     //save all the data we got from the client into the DB 
-    const product = new Facture(req.body)
+    const facture = new Facture(req.body)
 
-    product.save((err) => {
+    facture.save((err) => {
         if (err) return res.status(400).json({ success: false, err })
         return res.status(200).json({ success: true })
     })
-
 });
 
 
-router.post("/getFactures", (req, res) => {
-
-    let order = req.body.order ? req.body.order : "desc";
-    let sortBy = req.body.sortBy ? req.body.sortBy : "_id";
-    let limit = req.body.limit ? parseInt(req.body.limit) : 100;
-    let skip = parseInt(req.body.skip);
-
-    let findArgs = {};
-    let term = req.body.searchTerm;
-
-    for (let key in req.body.filters) {
-
-        if (req.body.filters[key].length > 0) {
-            if (key === "price") {
-                findArgs[key] = {
-                    $gte: req.body.filters[key][0],
-                    $lte: req.body.filters[key][1]
-                }
-            } else {
-                findArgs[key] = req.body.filters[key];
-            }
-        }
-    }
-
-    console.log(findArgs)
-
-    if (term) {
-        Facture.find(findArgs)
-            .find({ $text: { $search: term } })
-            .populate("writer")
-            .sort([[sortBy, order]])
-            .skip(skip)
-            .limit(limit)
-            .exec((err, products) => {
-                if (err) return res.status(400).json({ success: false, err })
-                res.status(200).json({ success: true, products, postSize: products.length })
-            })
-    } else {
-        Facture.find(findArgs)
-            .populate("writer")
-            .sort([[sortBy, order]])
-            .skip(skip)
-            .limit(limit)
-            .exec((err, products) => {
-                if (err) return res.status(400).json({ success: false, err })
-                res.status(200).json({ success: true, products, postSize: products.length })
-            })
-    }
-
-});
-
-
-//?id=${productId}&type=single
+//?id=${factureId}&type=single
 //id=12121212,121212,1212121   type=array 
-router.get("/products_by_id", (req, res) => {
+router.get("/factures_by_id", (req, res) => {
     let type = req.query.type
-    let productIds = req.query.id
+    let factureIds = req.query.id
 
     console.log("req.query.id", req.query.id)
 
     if (type === "array") {
         let ids = req.query.id.split(',');
-        productIds = [];
-        productIds = ids.map(item => {
+        factureIds = [];
+        factureIds = ids.map(item => {
             return item
         })
     }
 
-    console.log("productIds", productIds)
+    console.log("factureIds", factureIds)
 
 
-    //we need to find the product information that belong to product Id 
-    Facture.find({ '_id': { $in: productIds } })
+    //we need to find the facture information that belong to facture Id 
+    Facture.find({ '_id': { $in: factureIds } })
         .populate('writer')
-        .exec((err, product) => {
+        .exec((err, facture) => {
             if (err) return res.status(400).send(err)
-            return res.status(200).send(product)
+            return res.status(200).send(facture)
         })
 });
 
